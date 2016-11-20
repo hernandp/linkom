@@ -800,10 +800,10 @@ LK_RESULT LkFree(void)
                              LK_MAX_TOKENARG_COUNT.
             LK_E_UNINITIALIZED if library is not initialized yet.
             LK_E_NULLPOINTER   if NULL pointer is passed in call.
-   Remarks:
-   
-   - The caller *must free* the returned invalidToken pointer in case of 
-     unsuccessful return value.
+            LK_E_INVALIDSYNTAX if syntax string is not allowed.
+            
+            Other error codes can be returned. (See LK_RESULT)
+  
    --------------------------------------------------------------------------*/
 LK_RESULT LkSetSyntax(const wchar_t* syntax, wchar_t* invalidToken, size_t cchBuf)
 {    
@@ -953,7 +953,7 @@ LK_RESULT LkParse(int argc, wchar_t** argv, wchar_t* invalidArg, size_t cchBuf)
                 be >= LK_MAX_TOKENARG_LEN.
    
    Returns: LK_R_OK             if successful. 
-            LK_E_INVALIDSYNTAX  if syntax to be parsed in invalid.  
+            LK_E_INVALIDSYNTAX  if syntax to be parsed is invalid.  
    --------------------------------------------------------------------------*/
 LK_RESULT LkParse2(wchar_t* commandLine, wchar_t* invalidArg, size_t cchBuf)
 {
