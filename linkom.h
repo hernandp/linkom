@@ -95,6 +95,48 @@ typedef enum
 #define LK_SUCCESS(x)  ( ( (signed long)(x) ) >= 0)
 
 /* ---------------------------------------------------------------------------
+Error message table
+---------------------------------------------------------------------------*/
+typedef struct _lk_msgtab 
+{
+    LK_RESULT res;
+    wchar_t*  wErrMsg;
+} LK_MESSAGETABLE;
+
+static const LK_MESSAGETABLE g_lkErrTable[] = {
+    LK_R_OK,                        L"Operation successful",
+    LK_E_MALLOC,                    L"Memory allocation error",
+    LK_E_NULLPOINTER,               L"Null pointer argument",
+    LK_E_UNINITIALIZED,             L"Library uninitialized",
+    LK_E_INVALIDARG,                L"Invalid argument: %s",
+    LK_E_ALREADYINIT,               L"Already initialized",
+    LK_E_LISTFULL,                  L"List full",
+    LK_E_NOTFOUND,                  L"Parameter not found: %s",
+    LK_E_OUTOFBOUNDS,               L"Argument out of bounds",
+    LK_E_INVALIDSYNTAX,             L"Invalid syntax specification",
+    LK_E_UNKNOWNARG,                L"Unknown argument: %s",
+    LK_E_DUPLICATEARG,              L"Duplicate argument: %s",
+    LK_E_DUPLICATETOKEN,            L"Duplicate syntax token: %s",
+    LK_E_TYPEMISMATCH,              L"Type mismatch for argument: %s",
+    LK_E_MISSINGARG,                L"Required argument missing: %s",
+    LK_E_MISSINGVALUE,              L"Required value missing for parameter: %s",
+    LK_E_MISSINGNAMARG,             L"Required named argument missing: %s",
+    LK_E_DUPLICATEGROUPITEM,        L"Duplicate group argument: %s",
+    LK_E_CONTRADICTARG,             L"Contradictory arguments specified: %s",
+    LK_E_NOGROUPMEMBERCHOSEN,       L"Required group argument missing: %s",
+    LK_E_TOKENLENGTH,               L"Token length exceeded",
+    LK_E_TOKENCOUNT,                L"Token count exceeded",
+    LK_E_GROUPCOUNT,                L"Group count exceeded",
+    LK_E_GROUPMEMBERCOUNT,          L"Group member count exceeded",
+    LK_E_VALUELENGTH,               L"Parameter value length exceeded",
+    LK_E_UNDEFINED,                 L"Parameter is undefined",
+    LK_E_INSUFFICIENTBUFFER,        L"Specified buffer size is insufficient"
+};
+
+#define LK_RETURN_STERR(_lkerr) { _Lk_StoreExtErr(_lkerr, 0); return _lkerr; }
+#define LK_RETURN_STERR1(_lkerr,_arg) { _Lk_StoreExtErr(_lkerr, _arg); return _lkerr; }
+
+/* ---------------------------------------------------------------------------
    Tunable limits, modify as you wish 
    ---------------------------------------------------------------------------*/
 #ifndef LK_DEFINE_USER_LIMITS
@@ -105,6 +147,7 @@ typedef enum
 #endif
 
 #define LK_MAX_ERRORBUFFER_LEN   1024
+#define LK_MAX_GROUP_DESCRIPTION 256
 
 /* ---------------------------------------------------------------------------
    Token List types
@@ -171,6 +214,7 @@ typedef struct tagLK_GROUPINFO
 {
     wchar_t*            selectedParam;
     bool                isOptional;
+    wchar_t             description[LK_MAX_GROUP_DESCRIPTION];
 } LK_GROUPINFO;
 
 /* --------------------------------------------------------------------------
@@ -289,6 +333,7 @@ LK_RESULT _Lk_ClassifyTokenR(wchar_t* token,  bool  isOptional)
 
         g_groupInfo[g_groupCount].isOptional = isOptional;
         g_groupInfo[g_groupCount].selectedParam = NULL;
+        wcsncpy_s(g_groupInfo[g_groupCount].description, LK_MAX_GROUP_DESCRIPTION, &token[0], len);
                 
         LK_TOKEN_ITEM item;        
                 
@@ -510,7 +555,7 @@ LK_RESULT _Lk_EvalGroups(wchar_t* invalidArg)
     {
         if (!g_groupInfo[i].selectedParam && !g_groupInfo[i].isOptional)
         {
-            wcscpy_s(invalidArg, LK_MAX_TOKENARG_LEN, L"?");
+            wcscpy_s(invalidArg, LK_MAX_TOKENARG_LEN, g_groupInfo[i].description);
             return LK_E_NOGROUPMEMBERCHOSEN;    
         }
     }
@@ -754,7 +799,7 @@ LK_RESULT _Lk_ValidateArgV(int argc, wchar_t** argv, wchar_t* invalidArg)
             g_argList.item[j].isParam  = false;
             g_argList.item[j].hasValue = true;
             wcscpy_s(g_argList.item[j].value, LK_MAX_PARAMVALUE_LEN, argv[i]);  
-            wcscpy_s(g_argList.item[j].name, LK_MAX_PARAMVALUE_LEN, LK_UNMAPPED_ARG_NAME);
+            wcscpy_s(g_argList.item[j].name, LK_MAX_TOKENARG_LEN, LK_UNMAPPED_ARG_NAME);
         }
         
         g_argList.item[j].matchingGroup = LK_NOGROUP;
@@ -765,26 +810,45 @@ LK_RESULT _Lk_ValidateArgV(int argc, wchar_t** argv, wchar_t* invalidArg)
     return LK_R_OK;
 }
 
+void _Lk_StoreExtErr(LK_RESULT e, const wchar_t* arg)
+{
+    for (int i = 0; i < LK_ARRAYSIZE(g_lkErrTable); ++i) 
+    {
+        if (g_lkErrTable[i].res == e) {
+            if (arg)
+                swprintf_s(g_exErrBuffer, LK_MAX_ERRORBUFFER_LEN, g_lkErrTable[i].wErrMsg, arg);
+            else
+                wcscpy_s(g_exErrBuffer, LK_MAX_ERRORBUFFER_LEN, g_lkErrTable[i].wErrMsg);
+                    
+            return;
+        }
+    }
+
+    wcscpy_s(g_exErrBuffer, LK_MAX_ERRORBUFFER_LEN, L"Undefined error");
+}
+
+/******************************************************************************
+
+Public API begins here
+
+***************************************************************************/
+
 /*---------------------------------------------------------------------------*/
 LK_RESULT LkInit()
 {
-    return _Lk_TokenListInit(LK_MAX_TOKENARG_COUNT);
+    LK_RESULT r =  _Lk_TokenListInit(LK_MAX_TOKENARG_COUNT);
+    LK_RETURN_STERR(r);
 }
 
 /*---------------------------------------------------------------------------*/
 LK_RESULT LkFree(void)
 {
     _Lk_TokenListFree();                 
-    return LK_R_OK;
+    LK_RETURN_STERR(LK_R_OK);
 }
 
-/******************************************************************************
 
-   Public API begins here
-   
-   ***************************************************************************/
-
-   /* ---------------------------------------------------------------------------
+/* ---------------------------------------------------------------------------
     Sets the syntax for the command-line to be validated against.
    
    syntax:       The syntax specification string, with tokens separated by 
@@ -804,18 +868,18 @@ LK_RESULT LkFree(void)
             
             Other error codes can be returned. (See LK_RESULT)
   
-   --------------------------------------------------------------------------*/
+--------------------------------------------------------------------------*/
 LK_RESULT LkSetSyntax(const wchar_t* syntax, wchar_t* invalidToken, size_t cchBuf)
 {    
     _LKTRACE("_Lk_SetSyntax\n");
     
     if (cchBuf < LK_MAX_TOKENARG_LEN)
-        return LK_E_INSUFFICIENTBUFFER;
+        LK_RETURN_STERR(LK_E_INSUFFICIENTBUFFER);
     
     if (!g_tokenList)
-        return LK_E_UNINITIALIZED;
+        LK_RETURN_STERR(LK_E_UNINITIALIZED);
     if (!syntax || !invalidToken)
-        return LK_E_NULLPOINTER;
+        LK_RETURN_STERR(LK_E_NULLPOINTER);
     
     _Lk_TokenListClear();
         
@@ -832,12 +896,12 @@ LK_RESULT LkSetSyntax(const wchar_t* syntax, wchar_t* invalidToken, size_t cchBu
         {           
             size_t cbToken = sizeof(wchar_t) * (i - iTokStart);
 
-            if (cbToken  > LK_MAX_TOKENARG_LEN * sizeof (wchar_t))
-                return LK_E_TOKENLENGTH;
+            if (cbToken > LK_MAX_TOKENARG_LEN * sizeof(wchar_t))
+                LK_RETURN_STERR(LK_E_TOKENLENGTH);
 
             wchar_t* token = (wchar_t * )malloc(cbToken + sizeof(wchar_t));
             if (!token)
-                return LK_E_MALLOC;
+                LK_RETURN_STERR(LK_E_MALLOC);
             
             memcpy(token, syntax + iTokStart, cbToken);
             token[cbToken/sizeof(wchar_t)] = L'\0'; 
@@ -859,14 +923,14 @@ LK_RESULT LkSetSyntax(const wchar_t* syntax, wchar_t* invalidToken, size_t cchBu
             iTokStart = i;
             
             if (g_tokenCount == LK_MAX_TOKENARG_COUNT)
-                return LK_E_TOKENCOUNT;        
+                LK_RETURN_STERR(LK_E_TOKENCOUNT);
         }
         else
             i++;
     };
     
     _LKTRACEW(L"  Function successful\n");
-    return LK_R_OK;
+    LK_RETURN_STERR(LK_R_OK);
 }
 
 /* ---------------------------------------------------------------------------
@@ -880,14 +944,14 @@ LK_RESULT LkSetSyntax(const wchar_t* syntax, wchar_t* invalidToken, size_t cchBu
 LK_RESULT LkIsParamPresent(const wchar_t* paramName)
 {
     if (!paramName || !wcslen(paramName))
-        return LK_E_INVALIDARG;
+        return (LK_E_INVALIDARG);
     
     size_t i;
     for (i = 0; i < g_argList.count; ++i)
         if (!_wcsicmp(paramName, g_argList.item[i].name))
-            return LK_R_OK;
+            return (LK_R_OK);
     
-    return LK_E_NOTFOUND;
+    return (LK_E_NOTFOUND);
 }
 
 /* ---------------------------------------------------------------------------
@@ -906,7 +970,8 @@ LK_RESULT LkIsParamPresent(const wchar_t* paramName)
    - The caller *must not free* the returned pointer.
    --------------------------------------------------------------------------*/
 LK_RESULT LkGetParamValue(const wchar_t* paramName, wchar_t** paramValue) {
-    return _Lk_GetParamValue(paramName, paramValue);
+    LK_RESULT r =  _Lk_GetParamValue(paramName, paramValue);
+    return r;
 }
 
 /* ---------------------------------------------------------------------------
@@ -925,12 +990,12 @@ LK_RESULT LkGetParamValue(const wchar_t* paramName, wchar_t** paramValue) {
 LK_RESULT LkParse(int argc, wchar_t** argv, wchar_t* invalidArg, size_t cchBuf)
 {    
     if (cchBuf < LK_MAX_TOKENARG_LEN)
-        return LK_E_INSUFFICIENTBUFFER;
+        LK_RETURN_STERR(LK_E_INSUFFICIENTBUFFER);
     
     g_argList.count = 0;
     
     if (!g_syntaxValid)
-        return LK_E_INVALIDSYNTAX;
+        LK_RETURN_STERR(LK_E_INVALIDSYNTAX);
    
     LK_RESULT r = _Lk_ValidateArgV(argc, argv, invalidArg);
 
@@ -940,7 +1005,7 @@ LK_RESULT LkParse(int argc, wchar_t** argv, wchar_t* invalidArg, size_t cchBuf)
     if (LK_SUCCESS(r))
         r = _Lk_EvalArgs(invalidArg);
    
-    return r;   
+    LK_RETURN_STERR1(r,invalidArg);
 }
 
 /* ---------------------------------------------------------------------------
@@ -958,16 +1023,16 @@ LK_RESULT LkParse(int argc, wchar_t** argv, wchar_t* invalidArg, size_t cchBuf)
 LK_RESULT LkParse2(wchar_t* commandLine, wchar_t* invalidArg, size_t cchBuf)
 {
     if (cchBuf < LK_MAX_TOKENARG_LEN)
-        return LK_E_INSUFFICIENTBUFFER;
+        LK_RETURN_STERR(LK_E_INSUFFICIENTBUFFER);
     
     if (!g_syntaxValid)
-        return LK_E_INVALIDSYNTAX;
+        LK_RETURN_STERR(LK_E_INVALIDSYNTAX);
     if (!commandLine)
-        return LK_E_INVALIDARG;
+        LK_RETURN_STERR(LK_E_INVALIDARG);
 
     wchar_t* wCmdLineBuf = _wcsdup(commandLine);
     if (!wCmdLineBuf)
-        return LK_E_MALLOC;
+        LK_RETURN_STERR(LK_E_MALLOC);
 
     wchar_t* buf = NULL;
     wchar_t* thisarg = wcstok_s(wCmdLineBuf, L" ", &buf);    
@@ -983,7 +1048,7 @@ LK_RESULT LkParse2(wchar_t* commandLine, wchar_t* invalidArg, size_t cchBuf)
     LK_RESULT r = LkParse(argc, argv, invalidArg, cchBuf);
     free(wCmdLineBuf);
 
-    return r;
+    LK_RETURN_STERR1(r,invalidArg);
 }
 
 /* ---------------------------------------------------------------------------
