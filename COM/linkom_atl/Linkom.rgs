@@ -1,0 +1,24 @@
+HKCR
+{
+	Linkom.1.1 = s 'Linkom Class'
+	{
+		CLSID = s '{AB8BC6BA-2478-4849-B4B3-058D4EDE3660}'
+	}
+	Linkom.1 = s 'Linkom Class'
+	{		
+		CurVer = s 'Linkom.1.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {AB8BC6BA-2478-4849-B4B3-058D4EDE3660} = s 'Linkom Class'
+		{
+			ProgID = s 'Linkom.1.1'
+			VersionIndependentProgID = s 'Linkom.1'
+			InprocServer32 = s '%MODULE%'
+			{
+			}
+			TypeLib = s '{C61FE5D4-6F4E-4693-A707-3AB2B1DD4F89}'
+			Version = s '1.0'
+		}
+	}
+}

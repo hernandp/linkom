@@ -1,0 +1,44 @@
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	object,
+	uuid(601BF357-E6D9-4E3E-8DEC-908E559A9D69),
+	oleautomation,
+	nonextensible,
+	pointer_default(unique)
+]
+interface ILinkom : IUnknown{
+
+    [helpstring("Sets a syntax specification for the parser to work with.")]
+    HRESULT SetSyntax([in] BSTR syntaxSpec, [out] BSTR* invalidToken, [out, retval] unsigned long* reasonCode);
+
+    [helpstring("Parse a commandline string")]
+    HRESULT Parse([in] BSTR commandLine, [out] BSTR* invalidArg, [out, retval] unsigned long* reasonCode);
+
+    [helpstring("Returns boolean TRUE if this parameter is present")]
+    HRESULT IsParamPresent([in] BSTR paramName, [out, retval] BOOL* bPresent);
+
+    [helpstring("Returns a parameter value, if present")]
+    HRESULT GetParamValue([in] BSTR paramName, [out] BSTR* paramValue, [out, retval] unsigned long* reasonCode);
+
+    [helpstring("Gets the extended error string for the last Parse or SetSyntax operation call.")]
+    HRESULT GetExtErrorString([out, retval] BSTR* errString);
+
+};
+[
+	uuid(C61FE5D4-6F4E-4693-A707-3AB2B1DD4F89),
+	version(1.0)
+]
+library Linkom
+{
+	importlib("stdole2.tlb");    
+	[
+		uuid(AB8BC6BA-2478-4849-B4B3-058D4EDE3660)		
+	]
+	coclass Linkom
+	{
+		[default] interface ILinkom;
+	};
+};
+
