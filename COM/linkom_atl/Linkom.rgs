@@ -6,13 +6,13 @@ HKCR
 	}
 	Linkom.1 = s 'Linkom Class'
 	{		
-		CurVer = s 'Linkom.1.1'
+		CurVer = s 'Linkom.Component.1'
 	}
 	NoRemove CLSID
 	{
 		ForceRemove {AB8BC6BA-2478-4849-B4B3-058D4EDE3660} = s 'Linkom Class'
 		{
-			ProgID = s 'Linkom.1.1'
+			ProgID = s 'Linkom.Component.1'
 			VersionIndependentProgID = s 'Linkom.1'
 			InprocServer32 = s '%MODULE%'
 			{
