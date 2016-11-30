@@ -1,5 +1,6 @@
 # Linkom
 **A single-header, command-line parser library in C**
+#### With a quick-and-dirty COM wrapper for multi-language support
 
 ## License Terms
 
@@ -28,7 +29,7 @@ SOFTWARE.
 
 Linkom is a single-header, command-line parser library written in C. The language and distribution decision was based on the fact that A LOT of command line utilities are still being written in C (and not just C++).
 
-For programmers using other languages than C/C++, a COM component wrapper is projected for the near future.
+For programmers using other languages than C/C++, a COM component wrapper is provided. See below for info.
 
 Note that the symbols and jargon that the library and it's documentation use, such as "/" character for parameters and { } for grouping them, is based on the classic DOS/CPM/Microsoft documentation style.  This is different from the UNIX/Linux and GNU tradition where '--' and "options"  are used instead.
 
@@ -174,6 +175,15 @@ The above example will print:
 `Contradictory arguments: /A /B`
 
 See the header file for the message-table, which you can localize (I18N) to suit your needs.
+
+## ATL/COM Component
+
+To allow the library to be used in languages with COM binding support, you can build an ATL/COM project under the COM directory; after the build succeeds, register the library traditionally (see the output directory, which depends on Debug/release mode and 32/64 bit architecture).
+
+    REM Do this elevated
+    regsvr32 linkom_atl.dll
+    
+With your preferred development environment, bind your project/source to the Linkom_atl DLL, or the Linkom.1 ProgID. See your language/IDE/Platform manual/reference for guidelines on how to bind to COM objects.
 
 ## FAQ
 
