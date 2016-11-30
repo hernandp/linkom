@@ -1,6 +1,6 @@
 # Linkom
 **A single-header, command-line parser library in C**
-#### With a quick-and-dirty COM wrapper for multi-language support
+_With a quick-and-dirty COM wrapper for multi-language support_
 
 ## License Terms
 
