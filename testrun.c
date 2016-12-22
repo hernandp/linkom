@@ -34,7 +34,7 @@ SOFTWARE.
 #include "linkom.h"
 
 #define TESTINIT()        int _testc = 0; int _testok = 0; bool _r;
-#define VERIFY(_expr)     _testc++;printf("%s " #_expr "\n",( _r = _expr) ? "[ OK ]":"[FAIL]"); if(_r) _testok++;
+#define VERIFY(_expr)     _testc++;printf("%s " #_expr "\n",( _r = (_expr)) ? "[ OK ]":"[FAIL]"); if(_r) _testok++;
 #define TESTEND           printf("\nTest results: %d executed, %d successful, %d failed\n", _testc, _testok, _testc - _testok); 
     
 int main(int argc, char** argv)
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
  
     VERIFY(LkSetSyntax(L"[/A] [/B] [/C]", invToken, LK_MAX_TOKENARG_LEN) == LK_R_OK);
     VERIFY(LkSetSyntax(L"[/A] [C*", invToken, LK_MAX_TOKENARG_LEN) == LK_E_INVALIDSYNTAX);
-    VERIFY(invToken && !wcscmp(invToken,L"[C*"));
+    VERIFY(invToken != NULL && !wcscmp(invToken,L"[C*"));
     VERIFY(LkSetSyntax(L"[/B] [/B]", invToken, LK_MAX_TOKENARG_LEN) == LK_E_DUPLICATETOKEN);
     VERIFY(LkSetSyntax(L"[/A] [/B]", invToken, LK_MAX_TOKENARG_LEN) == LK_R_OK);
     
@@ -69,18 +69,18 @@ int main(int argc, char** argv)
     VERIFY(LkParse2(L"/A /B", invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);
     VERIFY(LkParse2(L"/B /A", invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);
     VERIFY(LkParse2(L"/B /B", invArg, LK_MAX_TOKENARG_LEN) == LK_E_DUPLICATEARG);   
-    VERIFY(invArg && !wcscmp(invArg, L"/B"));
+    VERIFY(invArg != NULL && !wcscmp(invArg, L"/B"));
     VERIFY(LkParse2(L"/Z", invArg, LK_MAX_TOKENARG_LEN) == LK_E_INVALIDARG);  
-    VERIFY(invArg && !wcscmp(invArg, L"/Z"));
+    VERIFY(invArg != NULL && !wcscmp(invArg, L"/Z"));
     
     printf("-------- Optional arguments check  -------------------------- \n");
     VERIFY(LkSetSyntax(L"/A [/B]", invToken, LK_MAX_TOKENARG_LEN) == LK_R_OK);
     VERIFY(LkParse2(L"", invArg, LK_MAX_TOKENARG_LEN) == LK_E_MISSINGARG);   
-    VERIFY(invArg && !wcscmp(invArg, L"/A"));
+    VERIFY(invArg != NULL && !wcscmp(invArg, L"/A"));
     VERIFY(LkParse2(L"/C", invArg, LK_MAX_TOKENARG_LEN) == LK_E_INVALIDARG);    
-    VERIFY(invArg && !wcscmp(invArg, L"/C"));
+    VERIFY(invArg != NULL && !wcscmp(invArg, L"/C"));
     VERIFY(LkParse2(L"/A /C", invArg, LK_MAX_TOKENARG_LEN) == LK_E_INVALIDARG);    
-    VERIFY(invArg && !wcscmp(invArg, L"/C"));
+    VERIFY(invArg != NULL && !wcscmp(invArg, L"/C"));
     VERIFY(LkParse2(L"/A", invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);    
     VERIFY(LkParse2(L"/A /B", invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);  
     VERIFY(LkParse2(L"/B /A", invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);  
@@ -89,12 +89,12 @@ int main(int argc, char** argv)
 
     VERIFY(LkSetSyntax(L"/A= /B? [/C]", invToken, LK_MAX_TOKENARG_LEN) == LK_R_OK);
     VERIFY(LkParse2(L"/A=2 /B=", invArg, LK_MAX_TOKENARG_LEN) == LK_E_MISSINGVALUE);
-    VERIFY(invArg && !wcscmp(invArg, L"/B="));
+    VERIFY(invArg != NULL && !wcscmp(invArg, L"/B="));
     VERIFY(LkParse2(L"/A=1 /B=xyz /C", invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);  
     VERIFY(LkGetParamValue(L"/C", &val) == LK_E_UNDEFINED);    
     VERIFY(LkParse2(L"/A=1 /B", invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);      
     VERIFY(LkParse2(L"/A", invArg, LK_MAX_TOKENARG_LEN) == LK_E_MISSINGVALUE);   
-    VERIFY(invArg && !wcscmp(invArg, L"/A"));
+    VERIFY(invArg != NULL && !wcscmp(invArg, L"/A"));
     VERIFY(LkGetParamValue(L"/C", &val) == LK_E_NOTFOUND);
     VERIFY(LkParse2(L"/A=1 /C", invArg, LK_MAX_TOKENARG_LEN) == LK_E_MISSINGARG);
     VERIFY(LkParse2(L"/A=1 /B=xyz", invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);     
@@ -102,9 +102,9 @@ int main(int argc, char** argv)
     VERIFY(LkIsParamPresent(L"/B") == LK_R_OK);
     VERIFY(LkIsParamPresent(L"/X") == LK_E_NOTFOUND);      
     VERIFY(LkGetParamValue(L"/A", &val) == LK_R_OK);
-    VERIFY(val && !wcscmp (val, L"1"));
+    VERIFY(val != NULL && !wcscmp (val, L"1"));
     VERIFY(LkGetParamValue(L"/B", &val) == LK_R_OK);
-    VERIFY(val && !wcscmp (val, L"xyz"));
+    VERIFY(val != NULL && !wcscmp (val, L"xyz"));
     VERIFY(LkGetParamValue(L"/D", &val) == LK_E_NOTFOUND);
     
     printf("-------- Named arguments check ------------------------------- \n");
@@ -112,30 +112,30 @@ int main(int argc, char** argv)
     VERIFY(LkSetSyntax(L"$file $a $b $c", invToken, LK_MAX_TOKENARG_LEN) == LK_R_OK);
     VERIFY(LkParse2(L"test.txt 1 2 3", invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);
     VERIFY(LkGetParamValue(L"$file", &val) == LK_R_OK);
-    VERIFY(val && !wcscmp (val, L"test.txt"));
+    VERIFY(val != NULL && !wcscmp (val, L"test.txt"));
     VERIFY(LkParse2(L"test.txt 1 2", invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);
     VERIFY(LkParse2(L"z z z", invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);
  
     printf("--- Named arguments check (getting values) ------------------- \n");
     VERIFY(LkParse2(L"test.txt 1", invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);
     VERIFY(LkGetParamValue(L"$file", &val) == LK_R_OK);
-    VERIFY(val && !wcscmp (val, L"test.txt"));
+    VERIFY(val != NULL && !wcscmp (val, L"test.txt"));
     VERIFY(LkGetParamValue(L"$a", &val) == LK_R_OK);
-    VERIFY(val && !wcscmp (val, L"1"));
+    VERIFY(val != NULL && !wcscmp (val, L"1"));
     VERIFY(LkGetParamValue(L"$b", &val) == LK_E_NOTFOUND);
     VERIFY(LkGetParamValue(L"$c", &val) == LK_E_NOTFOUND);
     
     printf("--- Named arguments check (count exceeded) ------------------- \n");
     VERIFY(LkParse2(L"test.txt 1 2 3 4 5 6 7 8 9", invArg, LK_MAX_TOKENARG_LEN) == LK_E_INVALIDARG);
-    VERIFY(invArg && !wcscmp (invArg, L"4"));
+    VERIFY(invArg != NULL && !wcscmp (invArg, L"4"));
     
     printf("--- group argument test -------------------------------------- \n");
     VERIFY(LkSetSyntax(L"{x}", invToken, LK_MAX_TOKENARG_LEN)== LK_E_INVALIDSYNTAX);
-    VERIFY(invToken && !wcscmp (invToken, L"{x}"));
+    VERIFY(invToken != NULL && !wcscmp (invToken, L"{x}"));
     VERIFY(LkSetSyntax(L"{/x}", invToken, LK_MAX_TOKENARG_LEN)== LK_E_INVALIDSYNTAX);
-    VERIFY(invToken && !wcscmp (invToken, L"{/x}"));
+    VERIFY(invToken != NULL && !wcscmp (invToken, L"{/x}"));
     VERIFY(LkSetSyntax(L"{/x|}", invToken, LK_MAX_TOKENARG_LEN)== LK_E_INVALIDSYNTAX);
-    VERIFY(invToken && !wcscmp (invToken, L"{/x|}"));
+    VERIFY(invToken != NULL && !wcscmp (invToken, L"{/x|}"));
     VERIFY(LkSetSyntax(L"{/on|/off} {/on|/x}", invToken, LK_MAX_TOKENARG_LEN) == LK_E_DUPLICATEGROUPITEM);   
     VERIFY(LkSetSyntax(L"{/on|/off|/auto}", invToken, LK_MAX_TOKENARG_LEN) == LK_R_OK); 
     VERIFY(LkParse2(L"/on",   invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK);    
@@ -156,13 +156,13 @@ int main(int argc, char** argv)
     VERIFY(LkParse2(L"/on /a",   invArg, LK_MAX_TOKENARG_LEN) == LK_E_MISSINGVALUE);
     VERIFY(LkParse2(L"/on /a=1000",   invArg, LK_MAX_TOKENARG_LEN) == LK_R_OK); 
     VERIFY(LkGetParamValue(L"/a", &val) == LK_R_OK);
-    VERIFY(val && !wcscmp(val, L"1000")); 
+    VERIFY(val != NULL && !wcscmp(val, L"1000")); 
     
     VERIFY(LkSetSyntax(L"[{/help|/?}] [/fat=] /size= /boot= /media= [/lic] $file", invToken, LK_MAX_TOKENARG_LEN) == LK_R_OK);
     VERIFY(LkParse2(L"xxx", invArg, LK_MAX_TOKENARG_LEN) == LK_E_MISSINGARG);
     VERIFY(LkGetParamValue(L"$file", &val) == LK_R_OK);
     VERIFY(LkParse2(L"/zzzz", invArg, LK_MAX_TOKENARG_LEN) == LK_E_INVALIDARG);
-    VERIFY(val && !wcscmp(val, L"xxx"));
+    VERIFY(val != NULL && !wcscmp(val, L"xxx"));
    
     printf("--- Shutdown ------------------------------------------------- \n");
     
