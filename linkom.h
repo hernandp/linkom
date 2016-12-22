@@ -34,17 +34,106 @@ volatile static char g_Copyright[] = "*** Linkom C Library (c) 2016 Hernan Di Pi
 extern "C" {
 #endif
 
-#if defined (__GNUC__) || defined(__WATCOMC__)
-#define __STDC_WANT_LIB_EXT1__ 1
-#include <wchar.h>
-#endif
-
-
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+#if defined (__GNUC__) 
+#define __STDC_WANT_LIB_EXT1__ 1
+#include <wchar.h>
+#include <errno.h>
+#define _wcsdup wcsdup
+#define _wcsicmp wcscasecmp
+#define _LK_MIN(a,b) ( (a) < (b) ? (a) : (b) )
+static int wcscpy_s(wchar_t* dest, size_t numElem, const wchar_t* src)
+{
+	size_t size = 0;
+	if(!dest || !numElem)
+		return EINVAL;
+	
+	dest[0] = 0;
+	if (!src)
+		return EINVAL;
+
+	size = wcslen(src) + 1;
+	if (size > numElem)
+		return ERANGE;
+	memcpy( dest, src, size * sizeof( wchar_t ));
+	return 0;
+}
+
+static int wcscat_s(wchar_t* dst, size_t numElem, const wchar_t* src)
+{
+	wchar_t* ptr = dst;
+	if (!dst || numElem==0) 
+		return EINVAL;
+	if (!src)
+	{
+		dst[0] = 0;
+		return EINVAL;
+	}
+
+	while (ptr < dst + numElem && *ptr != 0) ptr++;
+	while (ptr < dst + numElem)
+	{
+		if ((*ptr++ = *src++) == 0) return 0;
+	}
+	dst[0] = 0;
+	return ERANGE;
+}
+
+static int wcsncpy_s(wchar_t* dst, size_t numElem, const wchar_t* src,
+		size_t count) 
+{
+	size_t size = 0;
+	if (!dst || !numElem)
+		return EINVAL;
+
+	dst[0] = 0;
+	if (!src)
+		return EINVAL;
+	
+	size = _LK_MIN(wcslen(src), count);
+	if (size >= numElem) 
+	{
+		return ERANGE;
+	}
+	memcpy ( dst, src, size * sizeof (wchar_t) );
+	dst[size] = 0;
+	return 0;
+}
+
+static wchar_t* wcstok_s(wchar_t* str, const wchar_t* delim,
+		wchar_t** next_token)
+{
+	// Original ReactOS implementation uses the MSVCRT_CHECK_PMT
+	// macro to imitate functionality in Windows compiler/library.
+	// **this is ignored in this implementation**
+	//
+	wchar_t* ret;
+	if (!delim || !next_token || (!str || *next_token))
+		return NULL;
+	if (!str) 
+		str = *next_token;
+
+	while (*str && wcschr(delim, *str)) 
+		str++;
+	if (!*str) 
+		return NULL;
+	ret = str++;
+	while (*str && !wcschr(delim, *str)) 
+		str++;
+	if (*str)
+		*str++ = 0;
+	*next_token = str;
+	return ret;
+}
+
+
+
+#endif
 
 #ifdef  LK_ENABLE_TRACE
 #define _LKTRACE(...)    fprintf (stderr, __VA_ARGS__)
@@ -816,7 +905,7 @@ void _Lk_StoreExtErr(LK_RESULT e, const wchar_t* arg)
     {
         if (g_lkErrTable[i].res == e) {
             if (arg)
-                swprintf_s(g_exErrBuffer, LK_MAX_ERRORBUFFER_LEN, g_lkErrTable[i].wErrMsg, arg);
+                swprintf(g_exErrBuffer, LK_MAX_ERRORBUFFER_LEN, g_lkErrTable[i].wErrMsg, arg);
             else
                 wcscpy_s(g_exErrBuffer, LK_MAX_ERRORBUFFER_LEN, g_lkErrTable[i].wErrMsg);
                     
