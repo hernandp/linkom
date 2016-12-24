@@ -46,6 +46,7 @@ extern "C" {
 #include <errno.h>
 #define _wcsdup wcsdup
 #define _wcsicmp wcscasecmp
+#define wcstok_s wcstok
 #define _LK_MIN(a,b) ( (a) < (b) ? (a) : (b) )
 static int wcscpy_s(wchar_t* dest, size_t numElem, const wchar_t* src)
 {
@@ -105,34 +106,6 @@ static int wcsncpy_s(wchar_t* dst, size_t numElem, const wchar_t* src,
 	return 0;
 }
 
-static wchar_t* wcstok_s(wchar_t* str, const wchar_t* delim,
-		wchar_t** next_token)
-{
-	// Original ReactOS implementation uses the MSVCRT_CHECK_PMT
-	// macro to imitate functionality in Windows compiler/library.
-	// **this is ignored in this implementation**
-	//
-	wchar_t* ret;
-	if (!delim || !next_token || (!str || *next_token))
-		return NULL;
-	if (!str) 
-		str = *next_token;
-
-	while (*str && wcschr(delim, *str)) 
-		str++;
-	if (!*str) 
-		return NULL;
-	ret = str++;
-	while (*str && !wcschr(delim, *str)) 
-		str++;
-	if (*str)
-		*str++ = 0;
-	*next_token = str;
-	return ret;
-}
-
-
-
 #endif
 
 #ifdef  LK_ENABLE_TRACE
@@ -181,7 +154,7 @@ typedef enum
     LK_E_UNDEFINED          = 0xEEEE1100,
     LK_E_INSUFFICIENTBUFFER = 0xEEEE1101
 } LK_RESULT;
-#define LK_SUCCESS(x)  ( ( (signed long)(x) ) >= 0)
+#define LK_SUCCESS(x)  (( (x) == 0)|| ((x)==1))   
 
 /* ---------------------------------------------------------------------------
 Error message table
@@ -402,7 +375,7 @@ void _Lk_TokenListFree()
 LK_RESULT _Lk_ClassifyTokenR(wchar_t* token,  bool  isOptional)
 {
     assert(token);
-    _LKTRACEW(L"  %s (%s,%d)\n", __FUNCTIONW__, token, isOptional);
+    _LKTRACEW(L"  %s (%s,%d)\n", __FUNCTION__, token, isOptional);
     
     const size_t len = wcslen(token);
     if (len > LK_MAX_TOKENARG_LEN)
@@ -901,7 +874,7 @@ LK_RESULT _Lk_ValidateArgV(int argc, wchar_t** argv, wchar_t* invalidArg)
 
 void _Lk_StoreExtErr(LK_RESULT e, const wchar_t* arg)
 {
-    for (int i = 0; i < LK_ARRAYSIZE(g_lkErrTable); ++i) 
+    for (size_t i = 0; i < LK_ARRAYSIZE(g_lkErrTable); ++i) 
     {
         if (g_lkErrTable[i].res == e) {
             if (arg)
