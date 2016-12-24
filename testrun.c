@@ -4,6 +4,11 @@ This file is part of Linkom Library
 
 Copyright (c) 2016 Hernán Di Pietro
 
+Widechar safe string functions
+Copyright 1999 Alexandre Julliard
+Copyright 2000 Jon Griffiths
+
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights

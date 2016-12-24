@@ -8,6 +8,10 @@ _With a quick-and-dirty COM wrapper for multi-language support_
 Linkom Library 
 Copyright (c) 2016 Hernán Di Pietro
 
+Wide-char safe string functions
+Copyright 1999 Alexandre Julliard
+Copyright 2000 Jon Griffiths
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -56,7 +60,13 @@ The following conventions in this library and it's documentation.
 
 *Linkom* is a single-header library containing C code, so it does not require building any LIB or DLL file to be used; any reasonably modern C compiler should handle it. The file TESTRUN.C is included for development and testing purposes, it will execute several tests and report which of them failed.
 
-The library was tested on Windows and Microsoft Visual C++ 2012/2015 compilers only. 
+The library successfully builds and passes tests on:
+
+* Microsoft Visual C++ 2015
+* Microsoft Visual C++ 2012
+* GCC 6.2.0
+* clang 3.8.1
+  
 
 ## Using the library
 

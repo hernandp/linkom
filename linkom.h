@@ -4,6 +4,10 @@ This file is part of Linkom Library
 
 Copyright (c) 2016 Hernán Di Pietro
 
+Wide-char Safe string functions
+Copyright 1999 Alexandre Julliard
+Copyright 2000 Jon Griffiths
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -25,10 +29,6 @@ SOFTWARE.
 */
 #ifndef __LINKOM_H__f82e85a35f914826a6af35aa02839625
 #define __LINKOM_H__f82e85a35f914826a6af35aa02839625
-
-/* You may keep  THIS COPYRIGHT NOTICE TO EMBED INTO YOUR BINARY IMAGE  */
-/* (read License) */
-volatile static char g_Copyright[] = "*** Linkom C Library (c) 2016 Hernan Di Pietro ***";
 
 #ifdef __cplusplus
 extern "C" {
